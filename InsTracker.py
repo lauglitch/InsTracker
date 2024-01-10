@@ -48,15 +48,15 @@ def find_files():
             with zipfile.ZipFile(ruta_archivo, 'r') as zip_ref:
                 # Check if folder "data" exists inside .zip
                 carpetas = [nombre for nombre in zip_ref.namelist() if nombre.endswith('/')]
-                if 'followers_and_following/' in carpetas:
+                if 'connections/followers_and_following/' in carpetas:
                     # Check if files "followers_1.html" and "following.html'" exist inside "data" folder
                     archivos = zip_ref.namelist()
-                    if 'followers_and_following/followers_1.json' in archivos and 'followers_and_following/following.json' in archivos:
+                    if 'connections/followers_and_following/followers_1.json' in archivos and 'connections/followers_and_following/following.json' in archivos:
                         # Extract data and save it inside variables
                         global followerFile 
-                        followerFile = zip_ref.read('followers_and_following/followers_1.json')
+                        followerFile = zip_ref.read('connections/followers_and_following/followers_1.json')
                         global followingFile 
-                        followingFile = zip_ref.read('followers_and_following/following.json')
+                        followingFile = zip_ref.read('connections/followers_and_following/following.json')
                         print("'followers_1.json' and 'following.json' files found.")
                         #print(followerFile)
                         export_data()
