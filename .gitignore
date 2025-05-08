@@ -51,7 +51,6 @@ env/
 
 # Exported data
 exportedData.txt
-followignore.txt
 
 # VSCode
 .vscode/
