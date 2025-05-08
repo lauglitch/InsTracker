@@ -10,7 +10,6 @@ __pycache__/
 dist/
 build/
 *.egg-info/
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -26,35 +25,33 @@ coverage.xml
 *.py,cover
 
 # PyInstaller
-#  Usually contains the executable and other files
-*.manifest
 *.spec
+*.exe
+*.manifest
 
-# Tkinter Designer artifacts (if used)
+# Tkinter Designer artifacts
 *.ui
 
-# macOS files
-.DS_Store
+# OS-specific files
+.DS_Store      # macOS
+Thumbs.db      # Windows
 
-# Windows thumbnail cache
-Thumbs.db
-
-# Logs
+# Logs and backups
 *.log
+*.bak
 
-# Virtual environment
+# Virtual environments
 venv/
 .env/
 ENV/
 env/
 .venv/
 
-# Exported data
+# IDEs and editors
+.vscode/
+
+# Exported user data
 exportedData.txt
 
-# VSCode
-.vscode/
+# Built executables
 InsTracker.exe
-*.bak
-InsTracker.exe
-*.exe
