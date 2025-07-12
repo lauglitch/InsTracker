@@ -35,9 +35,7 @@ def set_instructions():
         "5- Pulsa en 'Crear archivos'.\n"
         "6- Cuando recibas el fichero en tu correo, descárgalo.\n"
         "7- En Instracker, pulsa el botón 'EXPORTAR DATOS' y selecciona el fichero descargado.\n"
-        "8- Archivo listo en la carpeta de InsTracker con el nombre 'exportedData.txt'.\n\n"
-        "NOTA: Puedes ignorar ciertos follows si los escribes en 'followignore.txt'\n"
-        "en la raíz del programa (1 por línea)\n",
+        "8- Archivo listo en la carpeta de InsTracker con el nombre 'exportedData.txt'.\n\n",
         font=("Arial", 14),
         bg=hexaColor,
         fg="white",
@@ -55,28 +53,21 @@ def find_files():
     if ruta_archivo:
         try:
             with zipfile.ZipFile(ruta_archivo, "r") as zip_ref:
-                carpetas = [
-                    nombre for nombre in zip_ref.namelist() if nombre.endswith("/")
-                ]
-                if "connections/followers_and_following/" in carpetas:
-                    archivos = zip_ref.namelist()
-                    if (
+                archivos = zip_ref.namelist()
+
+                # Verifica que existen los dos archivos necesarios
+                if (
+                    "connections/followers_and_following/followers_1.json" in archivos
+                    and "connections/followers_and_following/following.json" in archivos
+                ):
+                    global followerFile, followingFile
+                    followerFile = zip_ref.read(
                         "connections/followers_and_following/followers_1.json"
-                        in archivos
-                        and "connections/followers_and_following/following.json"
-                        in archivos
-                    ):
-                        global followerFile, followingFile
-                        followerFile = zip_ref.read(
-                            "connections/followers_and_following/followers_1.json"
-                        )
-                        followingFile = zip_ref.read(
-                            "connections/followers_and_following/following.json"
-                        )
-                        export_data()
-                    else:
-                        show_error(True)
-                        play_sound(False)
+                    ).decode("utf-8")
+                    followingFile = zip_ref.read(
+                        "connections/followers_and_following/following.json"
+                    ).decode("utf-8")
+                    export_data()
                 else:
                     show_error(True)
                     play_sound(False)
@@ -97,31 +88,34 @@ def clear_info():
 
 # 6- Method called after "follower.js" and "following.js" are found
 def export_data():
-    lines1 = followerFile.splitlines()
-    followerID = [line[18:-2] for line in lines1[9::13]]
-    lines2 = followingFile.splitlines()
-    followingID = [line[20:-2] for line in lines2[10::13]]
+    import json
 
-    try:
-        with open("followignore.txt", "r", encoding="utf-8") as ignore_file:
-            ignored_users = set(line.strip() for line in ignore_file if line.strip())
-    except FileNotFoundError:
-        ignored_users = set()
+    # Cargar los datos de followers (es una lista de dicts)
+    followers_json = json.loads(followerFile)
+    followerID = [
+        entry["string_list_data"][0]["value"]
+        for entry in followers_json
+        if entry.get("string_list_data")
+    ]
+
+    # Cargar los datos de following (es un dict con lista bajo 'relationships_following')
+    following_json = json.loads(followingFile)
+    followingID = [
+        entry["string_list_data"][0]["value"]
+        for entry in following_json.get("relationships_following", [])
+        if entry.get("string_list_data")
+    ]
 
     intersection = list(set(followingID) & set(followerID))
-    result = [
-        x
-        for x in followingID
-        if x not in intersection and x.decode("utf-8") not in ignored_users
-    ]
+    result = [user for user in followingID if user not in intersection]
 
     show_info(len(followerID), len(followingID), len(result))
 
     try:
         play_sound(True)
         with open("exportedData.txt", "w", encoding="utf-8") as file:
-            for linea in result:
-                file.writelines(linea.decode("utf-8") + "\n")
+            for username in result:
+                file.write(username + "\n")
     except Exception as e:
         play_sound(False)
         print(f"Error al guardar: {e}")

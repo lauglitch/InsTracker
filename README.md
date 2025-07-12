@@ -10,7 +10,7 @@
 [lauglitch.com](https://www.lauglitch.com)
 
 ## 📦 Current Version
-**1.2**
+**1.2.1**
 
 ---
 
@@ -39,7 +39,6 @@ To use InsTracker, you must first download your Instagram data by following thes
 2. Extract and run `InsTracker.exe`
 3. Click **Exportar Datos** and select the Instagram `.zip` file you received
 4. The file `exportedData.txt` will be created in the app's root directory
-5. (Optional) Add usernames to `followignore.txt` to skip them in results (one per line)
 
 ---
 

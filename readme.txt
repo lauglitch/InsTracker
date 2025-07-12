@@ -1,5 +1,5 @@
 		INSTRACKER 
-Versión: 	v1.2
+Versión: 	v1.2.1
 Autor: 		lauglitch
 Licencia: 	GNU General Public License v3.0
 
@@ -22,7 +22,6 @@ Instrucciones:
 6- Cuando recibas el fichero en tu correo, descárgalo.
 7- En Instracker, pulsa el botón 'EXPORTAR DATOS' y selecciona el fichero descargado.
 8- Archivo listo en la carpeta de InsTracker con el nombre 'exportedData.txt'
-NOTA: Puedes ignorar ciertos follows si los escribes en 'followignore.txt' en la raíz del programa (1 por línea)
 
 Puedes ver el código en Github
 https://github.com/lauglitch/InsTracker
