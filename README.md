@@ -10,7 +10,7 @@
 [lauglitch.com](https://www.lauglitch.com)
 
 ## 📦 Current Version
-**1.2**
+**1.3.1**
 
 ---
 
