@@ -2,7 +2,7 @@
 
 **InsTracker** is a desktop application that analyzes your Instagram data and generates a list of users you follow but who don't follow you back.
 
-> ✅ **New Feature**: You can now exclude accounts from the result using a `followignore.txt` file!
+> ✅ **New Feature**: You can now exclude accounts from the result using a `followignore.txt` file! (Only Pro Version)
 
 ---
 
