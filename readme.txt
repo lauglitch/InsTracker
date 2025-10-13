@@ -1,5 +1,5 @@
 		INSTRACKER 
-Versión: 	v1.3.1
+Versión: 	v1.3.2
 Autor: 		lauglitch
 Licencia: 	GNU General Public License v3.0
 
