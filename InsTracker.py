@@ -31,6 +31,13 @@ width = 950
 height = 700
 hexaColor = "#C13584"
 zipBuffer = None
+Label(
+    window,
+    text="Tip: Upgrade to Pro to ignore specific users",
+    bg=hexaColor,
+    fg="white",
+    font=("Arial", 10),
+).pack()
 
 
 def set_window():
@@ -50,13 +57,12 @@ def set_instructions():
         window,
         text=(
             "1- Inicia sesión en tu cuenta de Instagram: accountscenter.instagram.com/info_and_permissions/\n"
-            "2- Pulsa 'Descarga tu información' > 'Descargar o transferir información' y selecciona tu cuenta\n"
-            "3- Pulsa 'Parte de tu información' y marca 'Seguidores y seguidos'\n"
-            "4- Pulsa 'Descargar en el dispositivo' y selecciona: Intervalo: 'Desde el principio'; Formato: 'JSON'; Calidad: 'Baja'\n"
-            "5- Pulsa en 'Crear archivos' y espera el correo\n"
+            "2- Pulsa 'Exportar tu información', 'Crear exportación', selecciona tu cuenta y pulsa 'Exportar al dispositivo'\n"
+            "3- Pulsa 'Información que se incluirá' y marca Conexiones: 'Seguidores y seguidos'\n"
+            "4- Selecciona Intervalo de fechas: 'Cualquier fecha'; Formato: 'JSON'; Calidad del contenido multimedia: 'Más baja'\n"
+            "5- Pulsa en 'Iniciar exportación' y espera el correo\n"
             "6- Descarga el ZIP y en InsTracker pulsa 'EXPORTAR DATOS' y selecciona el fichero\n"
             "7- Archivo listo en la carpeta de InsTracker: 'exportedData.txt'\n\n"
-            "NOTA: Puedes ignorar usuarios listándolos en 'followignore.txt' (1 por línea)\n"
         ),
         font=("Arial", 14),
         bg=hexaColor,
@@ -160,18 +166,7 @@ def export_data(follower_files, following_files):
     try:
         followers, following = load_data(zipBuffer, follower_files, following_files)
 
-        try:
-            with open("followignore.txt", "r", encoding="utf-8") as f:
-                ignored = set(line.strip() for line in f if line.strip())
-        except:
-            ignored = set()
-
-        followers_set = set(followers)
-        following_set = set(following)
-
-        result = [
-            u for u in following_set if u not in followers_set and u not in ignored
-        ]
+        result = [u for u in following if u not in followers]
 
         show_info(len(followers), len(following), len(result))
 
