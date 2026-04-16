@@ -10,7 +10,7 @@
 [lauglitch.com](https://www.lauglitch.com)
 
 ## 📦 Current Version
-**1.3.1**
+**1.3.3**
 
 ---
 
@@ -20,14 +20,14 @@ To use InsTracker, you must first download your Instagram data by following thes
 
 1. Go to [Instagram Data Permissions](https://accountscenter.instagram.com/info_and_permissions/)
 2. Click:
-   - "Download your information"
-   - "Download or transfer information"
-3. Choose your account
-4. Click "Some of your information" and check the option: `Followers and following`
+   - "Export your information"
+   - "Create export"
+3. Choose your account and click on 'Export to device'
+4. Click "Information that will be included" and check the option: `Followers and those followed`
 5. Select:
-   - **Date range**: `From the beginning`
+   - **Date range**: `Any date`
    - **Format**: `JSON`
-   - **Media quality**: `Low`
+   - **Media quality**: `Lower`
 6. Click "Create files"
 7. Wait for the `.zip` file via email (can take up to 48 hours)
 
