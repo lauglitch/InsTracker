@@ -11,25 +11,28 @@ from urllib.parse import urlparse
 from pathlib import Path
 
 
-# ---------- Helpers: rutas de assets (dev, PyInstaller onefile/onedir) ----------
-def resource_path(relative_path: str) -> str:
+# ===============================
+# PATHS
+# ===============================
+def resource_path(relative_path):
     base_path = getattr(sys, "_MEIPASS", Path(__file__).parent)
     return str(Path(base_path) / relative_path)
 
 
-def asset(path: str) -> str:
+def asset(path):
     return resource_path(path)
 
 
-# ---------- UI base ----------
+# ===============================
+# UI
+# ===============================
 window = tk.Tk()
 width = 950
 height = 700
 hexaColor = "#C13584"
-zipBuffer = None  # guardamos el ZIP en memoria para relecturas
+zipBuffer = None
 
 
-# 1- Ventana
 def set_window():
     window.geometry(f"{width}x{height}")
     window.title("InsTracker (Free)")
@@ -38,238 +41,245 @@ def set_window():
     try:
         icon = tk.PhotoImage(file=asset("Assets/instagramLogo.png"))
         window.iconphoto(True, icon)
-    except Exception:
+    except:
         pass
 
 
-# 2- Instrucciones
 def set_instructions():
-    instructions = Label(
+    Label(
         window,
         text=(
-            "1) Entra: accountscenter.instagram.com/info_and_permissions/\n"
-            "2) 'Descarga tu información' → 'Descargar o transferir información' → tu cuenta\n"
-            "3) 'Parte de tu información' → marca 'Seguidores y seguidos'\n"
-            "4) 'Descargar en el dispositivo': Intervalo 'Desde el principio', Formato 'JSON', Calidad 'Baja'\n"
-            "5) Crea el archivo y descarga el ZIP que te envían\n"
-            "6) Pulsa 'EXPORTAR DATOS' y selecciona el ZIP\n"
-            "7) Se genera 'exportedData.txt' con quién sigues y no te sigue de vuelta\n"
+            "1- Inicia sesión en tu cuenta de Instagram: accountscenter.instagram.com/info_and_permissions/\n"
+            "2- Pulsa 'Descarga tu información' > 'Descargar o transferir información' y selecciona tu cuenta\n"
+            "3- Pulsa 'Parte de tu información' y marca 'Seguidores y seguidos'\n"
+            "4- Pulsa 'Descargar en el dispositivo' y selecciona: Intervalo: 'Desde el principio'; Formato: 'JSON'; Calidad: 'Baja'\n"
+            "5- Pulsa en 'Crear archivos' y espera el correo\n"
+            "6- Descarga el ZIP y en InsTracker pulsa 'EXPORTAR DATOS' y selecciona el fichero\n"
+            "7- Archivo listo en la carpeta de InsTracker: 'exportedData.txt'\n\n"
+            "NOTA: Puedes ignorar usuarios listándolos en 'followignore.txt' (1 por línea)\n"
         ),
         font=("Arial", 14),
         bg=hexaColor,
         fg="white",
         justify="left",
         wraplength=800,
-    )
-    instructions.pack(pady=(0, 0))
+    ).pack()
 
 
-# 3- Botón: buscar ZIP
-def find_files():
-    clear_info()
-    show_error(False)
-    ruta_archivo = filedialog.askopenfilename(filetypes=[("Archivo ZIP", "*.zip")])
-    if not ruta_archivo:
-        return
+# ===============================
+#
+# ===============================
+FOLLOWERS_REGEX = re.compile(r"followers(_\d+)?\.json$", re.IGNORECASE)
+FOLLOWING_REGEX = re.compile(r"following(_\d+)?\.json$", re.IGNORECASE)
+
+
+def find_json_files(names):
+    followers = [n for n in names if FOLLOWERS_REGEX.search(n)]
+    following = [n for n in names if FOLLOWING_REGEX.search(n)]
+    return sorted(followers), sorted(following)
+
+
+# ===============================
+# EXTRACT USERNAME
+# ===============================
+def normalize(username):
+    if not username:
+        return None
+    return username.strip().lower()
+
+
+def extract_username(entry):
+    # value
     try:
-        with zipfile.ZipFile(ruta_archivo, "r") as z:
-            archivos = z.namelist()
-
-            # detecta followers*.json (puede venir followers.json, followers_1.json, followers_2.json…)
-            follower_paths = sorted(
-                a
-                for a in archivos
-                if a.startswith("connections/followers_and_following/")
-                and re.search(r"followers(_\d+)?\.json$", a)
-            )
-
-            # detecta following.json (o future following_*.json)
-            following_paths = sorted(
-                a
-                for a in archivos
-                if a.startswith("connections/followers_and_following/")
-                and re.search(r"following(_\d+)?\.json$", a)
-            )
-
-            if follower_paths and following_paths:
-                global zipBuffer
-                with open(ruta_archivo, "rb") as f:
-                    zipBuffer = f.read()
-                export_data(follower_paths, following_paths[0])
-            else:
-                show_error(True)
-                play_sound(False)
-    except zipfile.BadZipFile:
-        show_error(True)
-        play_sound(False)
-
-
-# 4- Limpiar labels antiguos
-def clear_info():
-    for widget in window.winfo_children():
-        if isinstance(widget, tk.Label) and any(
-            key in widget.cget("text").lower()
-            for key in ["follower", "following", "unmutual"]
-        ):
-            widget.destroy()
-
-
-# 5- Extracción robusta username
-def _extract_username(entry):
-    # a) valor clásico
-    try:
-        val = entry.get("string_list_data", [])[0].get("value", "").strip()
-        if val:
-            return val
-    except Exception:
+        for item in entry.get("string_list_data", []):
+            val = item.get("value")
+            if val:
+                return normalize(val)
+    except:
         pass
-    # b) nuevo esquema: viene en title
-    t = entry.get("title", "")
-    if isinstance(t, str) and t.strip():
-        return t.strip()
-    # c) fallback desde href
+
+    # title
+    t = entry.get("title")
+    if isinstance(t, str):
+        return normalize(t)
+
+    # href
     try:
-        href = entry.get("string_list_data", [])[0].get("href", "")
-        if href:
-            path = urlparse(href).path.strip("/")
-            if path.startswith("_u/"):
-                path = path[3:]
-            return path.split("/")[0]
-    except Exception:
+        for item in entry.get("string_list_data", []):
+            href = item.get("href", "")
+            if href:
+                path = urlparse(href).path.strip("/")
+                if path.startswith("_u/"):
+                    path = path[3:]
+                return normalize(path.split("/")[0])
+    except:
         pass
+
     return None
 
 
-# 6- Carga y cálculo
-def _load_followers_and_following_from_zip_bytes(
-    zip_bytes, follower_paths, following_path
-):
+# ===============================
+# LOAD DATA
+# ===============================
+def load_data(zip_bytes, follower_files, following_files):
     with zipfile.ZipFile(io.BytesIO(zip_bytes), "r") as z:
-        # followers: lista de entradas
-        followers = []
-        for fp in follower_paths:
-            data = json.loads(z.read(fp).decode("utf-8"))
+
+        # ✅ FOLLOWERS (SOLO listas válidas)
+        followers_entries = []
+        for file in follower_files:
+            data = json.loads(z.read(file).decode("utf-8"))
+
             if isinstance(data, list):
-                followers.extend(data)
+                followers_entries.extend(data)
+
             elif isinstance(data, dict):
-                followers.extend(data.get("relationships_followers", []))
+                if "relationships_followers" in data:
+                    followers_entries.extend(data["relationships_followers"])
 
-        # following: dict con relationships_following o lista
-        following_raw = json.loads(z.read(following_path).decode("utf-8"))
-        if (
-            isinstance(following_raw, dict)
-            and "relationships_following" in following_raw
-        ):
-            following_entries = following_raw["relationships_following"]
-        else:
-            following_entries = following_raw if isinstance(following_raw, list) else []
+        # ✅ FOLLOWING (todas las partes)
+        following_entries = []
+        for file in following_files:
+            data = json.loads(z.read(file).decode("utf-8"))
 
-        followerIDs = set(filter(None, (_extract_username(e) for e in followers)))
-        followingIDs = list(
-            filter(None, (_extract_username(e) for e in following_entries))
-        )
-        return followerIDs, followingIDs
+            if isinstance(data, dict) and "relationships_following" in data:
+                following_entries.extend(data["relationships_following"])
+
+            elif isinstance(data, list):
+                following_entries.extend(data)
+
+        followers = set(filter(None, (extract_username(e) for e in followers_entries)))
+        following = list(filter(None, (extract_username(e) for e in following_entries)))
+
+        return followers, following
 
 
-def export_data(follower_paths, following_path):
+# ===============================
+# CORE
+# ===============================
+def export_data(follower_files, following_files):
     try:
-        followers_set, following_list = _load_followers_and_following_from_zip_bytes(
-            zipBuffer, follower_paths, following_path
-        )
+        followers, following = load_data(zipBuffer, follower_files, following_files)
 
-        # unmutual: gente a la que sigues y no te sigue
-        intersection = set(following_list) & followers_set
-        result = [user for user in following_list if user not in intersection]
+        try:
+            with open("followignore.txt", "r", encoding="utf-8") as f:
+                ignored = set(line.strip() for line in f if line.strip())
+        except:
+            ignored = set()
 
-        show_info(len(followers_set), len(following_list), len(result))
+        followers_set = set(followers)
+        following_set = set(following)
+
+        result = [
+            u for u in following_set if u not in followers_set and u not in ignored
+        ]
+
+        show_info(len(followers), len(following), len(result))
 
         with open("exportedData.txt", "w", encoding="utf-8") as f:
             for u in result:
                 f.write(u + "\n")
 
         play_sound(True)
+
     except Exception as e:
-        play_sound(False)
+        print("ERROR:", e)
         show_error(True)
-        print(f"Error en exportación: {e}")
+        play_sound(False)
 
 
-# 7- Error label
-def show_error(showError):
-    errorText.config(text="Archivo no válido" if showError else "")
+# ===============================
+# UI HELPERS
+# ===============================
+def clear_info():
+    for widget in window.winfo_children():
+        if isinstance(widget, tk.Label) and any(
+            k in widget.cget("text").lower()
+            for k in ["follower", "following", "unmutual"]
+        ):
+            widget.destroy()
 
 
-# 8- Contadores
-def show_info(followerCount, followingCount, unmutualCount):
+def show_error(show):
+    errorText.config(text="Archivo no válido" if show else "")
+
+
+def show_info(f1, f2, f3):
     tk.Label(
-        window,
-        text=f"follower: {followerCount}",
-        font=("Arial", 16),
-        bg=hexaColor,
-        fg="white",
+        window, text=f"follower: {f1}", font=("Arial", 16), bg=hexaColor, fg="white"
     ).place(x=200, y=600)
     tk.Label(
-        window,
-        text=f"following: {followingCount}",
-        font=("Arial", 16),
-        bg=hexaColor,
-        fg="white",
+        window, text=f"following: {f2}", font=("Arial", 16), bg=hexaColor, fg="white"
     ).place(x=400, y=600)
     tk.Label(
-        window,
-        text=f"unmutual: {unmutualCount}",
-        font=("Arial", 16),
-        bg=hexaColor,
-        fg="white",
+        window, text=f"unmutual: {f3}", font=("Arial", 16), bg=hexaColor, fg="white"
     ).place(x=600, y=600)
 
 
-# 9- Sonido
-def play_sound(succeed):
+def play_sound(success):
     try:
         path = (
             asset("Assets/successAudio.mp3")
-            if succeed
+            if success
             else asset("Assets/failureAudio.mp3")
         )
         pygame.mixer.music.load(path)
         pygame.mixer.music.play()
-    except Exception:
+    except:
         pass
 
 
-# ---------- Main ----------
+# ===============================
+# FILE SELECT
+# ===============================
+def find_files():
+    clear_info()
+    show_error(False)
+
+    file = filedialog.askopenfilename(filetypes=[("ZIP", "*.zip")])
+    if not file:
+        return
+
+    try:
+        with zipfile.ZipFile(file, "r") as z:
+            names = z.namelist()
+
+        follower_files, following_files = find_json_files(names)
+
+        if not follower_files or not following_files:
+            show_error(True)
+            play_sound(False)
+            return
+
+        global zipBuffer
+        with open(file, "rb") as f:
+            zipBuffer = f.read()
+
+        export_data(follower_files, following_files)
+
+    except:
+        show_error(True)
+        play_sound(False)
+
+
+# ===============================
+# START
+# ===============================
 set_window()
 
-# Logo
 try:
-    titlePNG = Image.open(asset("Assets/instrackerTitle.png")).convert("RGBA")
-    image_tk = ImageTk.PhotoImage(titlePNG)
-    tk.Label(window, image=image_tk, bg=hexaColor).pack(pady=(10, 10))
-except Exception:
+    img = Image.open(asset("Assets/instrackerTitle.png"))
+    img_tk = ImageTk.PhotoImage(img)
+    tk.Label(window, image=img_tk, bg=hexaColor).pack(pady=10)
+except:
     pass
 
 set_instructions()
 
-# Botón EXPORTAR DATOS
-styles = ttk.Style()
-styles.configure("TButton", borderwidth=0, relief="flat")
-try:
-    btnImage_tk = ImageTk.PhotoImage(Image.open(asset("Assets/exportButtonPNG.png")))
-    ttk.Button(window, image=btnImage_tk, command=find_files, style="TButton").pack(
-        pady=(0, 60)
-    )
-except Exception:
-    ttk.Button(window, text="EXPORTAR DATOS", command=find_files).pack(pady=(0, 60))
+ttk.Button(window, text="EXPORTAR DATOS", command=find_files).pack(pady=40)
 
-# Error Label
-errorText = tk.Label(window, text="", bg=hexaColor, font=("Arial", 16), fg="white")
+errorText = tk.Label(window, text="", bg=hexaColor, fg="white")
 errorText.place(x=390, y=600)
 
-# Init mixer
-try:
-    pygame.mixer.init()
-except Exception:
-    pass
+pygame.mixer.init()
 
 window.mainloop()
