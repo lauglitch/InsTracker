@@ -50,10 +50,10 @@ def set_instructions():
         window,
         text=(
             "1- Inicia sesión en tu cuenta de Instagram: accountscenter.instagram.com/info_and_permissions/\n"
-            "2- Pulsa 'Descarga tu información' > 'Descargar o transferir información' y selecciona tu cuenta\n"
-            "3- Pulsa 'Parte de tu información' y marca 'Seguidores y seguidos'\n"
-            "4- Pulsa 'Descargar en el dispositivo' y selecciona: Intervalo: 'Desde el principio'; Formato: 'JSON'; Calidad: 'Baja'\n"
-            "5- Pulsa en 'Crear archivos' y espera el correo\n"
+            "2- Pulsa 'Exportar tu información', 'Crear exportación', selecciona tu cuenta y pulsa 'Exportar al dispositivo'\n"
+            "3- Pulsa 'Información que se incluirá' y marca Conexiones: 'Seguidores y seguidos'\n"
+            "4- Selecciona Intervalo de fechas: 'Cualquier fecha'; Formato: 'JSON'; Calidad del contenido multimedia: 'Más baja'\n"
+            "5- Pulsa en 'Iniciar exportación' y espera el correo\n"
             "6- Descarga el ZIP y en InsTracker pulsa 'EXPORTAR DATOS' y selecciona el fichero\n"
             "7- Archivo listo en la carpeta de InsTracker: 'exportedData.txt'\n\n"
             "NOTA: Puedes ignorar usuarios listándolos en 'followignore.txt' (1 por línea)\n"
